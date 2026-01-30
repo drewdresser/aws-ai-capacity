@@ -1,0 +1,25 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Environment files
+.env
+
+# Reports output
+reports/
+
+# Chainlit
+.chainlit/
+.files/
+
+# IDE
+.idea/
+.vscode/
+*.swp
