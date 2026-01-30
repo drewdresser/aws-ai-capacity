@@ -7,10 +7,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 uv sync                              # Install dependencies
 uv sync --all-extras                 # Install with dev dependencies
-uv run ai-capacity chat "query"      # Run a single agent query
-uv run ai-capacity serve             # Start Chainlit UI on localhost:8000
-uv run ai-capacity report daily      # Generate capacity report
-uv run ai-capacity list-instance-types  # List GPU specs
+uv run aws-ai-capacity chat "query"      # Run a single agent query
+uv run aws-ai-capacity serve             # Start Chainlit UI on localhost:8000
+uv run aws-ai-capacity report daily      # Generate capacity report
+uv run aws-ai-capacity list-instance-types  # List GPU specs
 uv run pytest                        # Run tests
 uv run ruff check .                  # Lint
 ```

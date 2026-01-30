@@ -1,4 +1,4 @@
-# AI Capacity - AWS GPU Capacity Management Agent
+# AWS AI Capacity - GPU Capacity Management Agent
 
 A Pydantic AI-powered agent for managing and querying AWS GPU capacity, with a Chainlit chat interface and CLI for automated reporting.
 
@@ -45,7 +45,7 @@ AWS_PROFILE=default  # Optional
 
 Start the Chainlit UI:
 ```bash
-uv run ai-capacity serve
+uv run aws-ai-capacity serve
 ```
 
 Then open http://localhost:8000
@@ -54,28 +54,28 @@ Then open http://localhost:8000
 
 ```bash
 # Single query
-uv run ai-capacity chat "What p5 training plans are available?"
+uv run aws-ai-capacity chat "What p5 training plans are available?"
 
 # Generate reports
-uv run ai-capacity report daily
-uv run ai-capacity report availability
-uv run ai-capacity report training-plans
+uv run aws-ai-capacity report daily
+uv run aws-ai-capacity report availability
+uv run aws-ai-capacity report training-plans
 
 # Save report to file
-uv run ai-capacity report daily -o capacity-report.md
+uv run aws-ai-capacity report daily -o capacity-report.md
 
 # Generate all reports (for cron)
-uv run ai-capacity cron-report -d ./reports
+uv run aws-ai-capacity cron-report -d ./reports
 
 # List GPU instance types
-uv run ai-capacity list-instance-types
+uv run aws-ai-capacity list-instance-types
 ```
 
 ### Cron Job Example
 
 ```bash
 # Daily capacity report at 8am
-0 8 * * * cd /path/to/ai-capacity && uv run ai-capacity cron-report -d ./reports
+0 8 * * * cd /path/to/ai-capacity && uv run aws-ai-capacity cron-report -d ./reports
 ```
 
 ## Example Questions
