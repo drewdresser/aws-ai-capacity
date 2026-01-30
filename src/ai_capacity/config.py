@@ -33,7 +33,7 @@ class Settings(BaseSettings):
         description="AWS region for Bedrock LLM API calls",
     )
     bedrock_model_id: str = Field(
-        default="us.anthropic.claude-sonnet-4-20250514-v1:0",
+        default="us.anthropic.claude-opus-4-5-20251101-v1:0",
         description="Bedrock model ID to use for the agent",
     )
     agent_max_retries: int = Field(

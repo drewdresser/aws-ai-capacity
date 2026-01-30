@@ -1,13 +1,21 @@
 """CLI entry point for AWS GPU Capacity Agent."""
 
 import asyncio
+import json
 from datetime import datetime
 from pathlib import Path
-
 import aioboto3
 import typer
+from pydantic_ai import (
+    AgentRunResult,
+    ModelRequest,
+    ModelResponse,
+    ToolCallPart,
+    ToolReturnPart,
+)
 from rich.console import Console
 from rich.panel import Panel
+from rich.syntax import Syntax
 
 from ai_capacity.agent.agent import capacity_agent
 from ai_capacity.agent.deps import AgentDeps
@@ -65,13 +73,45 @@ def create_deps(region: str | None = None) -> AgentDeps:
     )
 
 
-async def run_agent_query(prompt: str, deps: AgentDeps) -> str:
+async def run_agent_query(prompt: str, deps: AgentDeps, return_result: bool = False) -> str | AgentRunResult[str]:
     """Run a single agent query and return the response."""
     try:
         result = await capacity_agent.run(prompt, deps=deps)
-        return result.output
+        return result if return_result else result.output
     finally:
         await deps.close()
+
+
+def print_tool_calls(result: AgentRunResult[str]) -> None:
+    """Pretty print tool calls from the agent run."""
+    console.print("\n[bold cyan]Agent Trajectory[/bold cyan]\n")
+
+    tool_call_count = 0
+    for message in result.all_messages():
+        if isinstance(message, ModelResponse):
+            for part in message.parts:
+                if isinstance(part, ToolCallPart):
+                    tool_call_count += 1
+                    console.print(f"[bold yellow]Tool Call #{tool_call_count}:[/bold yellow] {part.tool_name}")
+                    if part.args:
+                        args_json = json.dumps(part.args, indent=2, default=str)
+                        console.print(Syntax(args_json, "json", theme="monokai", line_numbers=False))
+
+        elif isinstance(message, ModelRequest):
+            for part in message.parts:
+                if isinstance(part, ToolReturnPart):
+                    # Truncate long responses
+                    content = part.content
+                    if isinstance(content, str) and len(content) > 500:
+                        content = content[:500] + "... [truncated]"
+                    elif not isinstance(content, str):
+                        content = json.dumps(content, indent=2, default=str)
+                        if len(content) > 500:
+                            content = content[:500] + "... [truncated]"
+                    console.print(f"[dim]Response:[/dim]")
+                    console.print(Panel(str(content), border_style="dim"))
+
+    console.print(f"\n[bold cyan]Total tool calls: {tool_call_count}[/bold cyan]\n")
 
 
 @app.command()
@@ -79,6 +119,9 @@ def chat(
     prompt: str = typer.Argument(..., help="Question or prompt for the agent"),
     region: str = typer.Option(
         None, "--region", "-r", help="AWS region to query"
+    ),
+    debug: bool = typer.Option(
+        False, "--debug", "-d", help="Show tool calls made during execution"
     ),
 ) -> None:
     """Run a single query against the capacity agent."""
@@ -88,9 +131,12 @@ def chat(
     # Recreate deps since check_credentials runs the event loop
     deps = create_deps(region)
     with console.status("[bold green]Querying AWS capacity..."):
-        response = asyncio.run(run_agent_query(prompt, deps))
+        result = asyncio.run(run_agent_query(prompt, deps, return_result=True))
 
-    console.print(Panel(response, title="Agent Response", border_style="green"))
+    if debug:
+        print_tool_calls(result)
+
+    console.print(Panel(result.output, title="Agent Response", border_style="green"))
 
 
 @app.command()

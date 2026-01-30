@@ -38,7 +38,7 @@ cp .env.example .env
 
 ## Configuration
 
-The agent uses **AWS Bedrock** for the LLM, so it uses your existing AWS credentials.
+The agent uses **AWS Bedrock** with **Claude Opus 4.5** (`anthropic.claude-opus-4-5-20251101-v1:0`) by default.
 
 Required AWS permissions:
 - `bedrock:InvokeModel` - For Claude model access
@@ -48,11 +48,25 @@ Required AWS permissions:
 - `ec2:DescribeCapacityReservations` - Query reservations
 - `ec2:DescribeInstanceTypeOfferings` - Check availability
 
-Configure in `.env`:
+### Environment Variables
+
+For development or to override defaults, create a `.env` file:
+
 ```bash
+# AWS credentials
+AWS_PROFILE=myprofile
 AWS_REGION=us-east-1
-AWS_PROFILE=default  # Optional
+
+# Override the default model
+BEDROCK_MODEL_ID=us.anthropic.claude-opus-4-5-20251101-v1:0
+BEDROCK_REGION=us-east-1
+
+# Other options
+AGENT_MAX_RETRIES=3
+LOG_LEVEL=DEBUG
 ```
+
+See `.env.example` for all available options.
 
 ## Usage
 
@@ -70,6 +84,9 @@ Then open http://localhost:8000
 ```bash
 # Single query
 uv run aws-ai-capacity chat "What p5 training plans are available?"
+
+# Debug mode - shows all tool calls made by the agent
+uv run aws-ai-capacity chat "What p5 training plans are available?" --debug
 
 # Generate reports
 uv run aws-ai-capacity report daily
