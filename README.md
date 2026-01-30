@@ -10,11 +10,26 @@ A Pydantic AI-powered agent for managing and querying AWS GPU capacity, with a C
 - **Chat Interface**: Interactive Chainlit UI for ad-hoc queries
 - **CLI Reports**: Automated report generation for cron jobs
 
-## Installation
+## Quick Start (uvx)
+
+Run directly without installing:
+
+```bash
+# With inline environment variables
+AWS_PROFILE=myprofile uvx aws-ai-capacity chat "What GPU capacity is available?"
+
+# Or export first
+export AWS_PROFILE=myprofile
+uvx aws-ai-capacity chat "What p5 training plans are available?"
+uvx aws-ai-capacity report daily
+```
+
+## Installation (Development)
 
 ```bash
 # Clone and install
-cd ai-capacity
+git clone https://github.com/drewdresser/aws-ai-capacity.git
+cd aws-ai-capacity
 uv sync
 
 # Copy environment template

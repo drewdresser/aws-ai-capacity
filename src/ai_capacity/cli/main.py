@@ -20,11 +20,36 @@ from ai_capacity.agent.prompts import (
 from ai_capacity.config import settings
 
 app = typer.Typer(
-    name="ai-capacity",
+    name="aws-ai-capacity",
     help="AWS GPU Capacity Management Agent CLI",
     no_args_is_help=True,
 )
 console = Console()
+
+
+async def validate_aws_credentials(deps: AgentDeps) -> None:
+    """Validate AWS credentials by making a simple STS call."""
+    async with deps.session.client("sts") as sts:
+        await sts.get_caller_identity()
+
+
+def check_credentials(deps: AgentDeps) -> None:
+    """Check AWS credentials and exit with helpful message if invalid."""
+    try:
+        asyncio.run(validate_aws_credentials(deps))
+    except Exception as e:
+        error_msg = str(e)
+        console.print("[red bold]AWS credential error:[/red bold]")
+        console.print(f"[red]{error_msg}[/red]")
+        console.print()
+        if "expired" in error_msg.lower() or "token" in error_msg.lower():
+            console.print("[yellow]Try refreshing your SSO session:[/yellow]")
+            console.print(f"  aws sso login --profile {settings.aws_profile or 'default'}")
+        else:
+            console.print("[yellow]Check your AWS configuration:[/yellow]")
+            console.print("  - Verify AWS_PROFILE is set correctly")
+            console.print("  - Ensure credentials are configured in ~/.aws/")
+        raise typer.Exit(1)
 
 
 def create_deps(region: str | None = None) -> AgentDeps:
@@ -58,7 +83,10 @@ def chat(
 ) -> None:
     """Run a single query against the capacity agent."""
     deps = create_deps(region)
+    check_credentials(deps)
 
+    # Recreate deps since check_credentials runs the event loop
+    deps = create_deps(region)
     with console.status("[bold green]Querying AWS capacity..."):
         response = asyncio.run(run_agent_query(prompt, deps))
 
@@ -93,7 +121,9 @@ def report(
         raise typer.Exit(1)
 
     deps = create_deps(region)
+    check_credentials(deps)
 
+    deps = create_deps(region)
     with console.status(f"[bold green]Generating {report_type} report..."):
         response = asyncio.run(run_agent_query(prompts[report_type], deps))
 
@@ -161,6 +191,9 @@ def cron_report(
     This command generates all report types and saves them to the output directory.
     Designed to be run from a cron job for automated reporting.
     """
+    deps = create_deps(region)
+    check_credentials(deps)
+
     output_dir.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -169,6 +202,9 @@ def cron_report(
         ("availability", AVAILABILITY_CHECK_PROMPT),
         ("training-plans", TRAINING_PLAN_STATUS_PROMPT),
     ]
+
+    succeeded = []
+    failed = []
 
     for report_name, prompt in reports:
         console.print(f"[blue]Generating {report_name} report...[/blue]")
@@ -188,11 +224,18 @@ def cron_report(
 """
             output_file.write_text(report_content)
             console.print(f"[green]  Saved: {output_file}[/green]")
+            succeeded.append(report_name)
 
         except Exception as e:
             console.print(f"[red]  Error generating {report_name}: {e}[/red]")
+            failed.append(report_name)
 
-    console.print("[green]All reports generated successfully![/green]")
+    if failed:
+        console.print(f"[red]Failed: {', '.join(failed)}[/red]")
+        console.print(f"[green]Succeeded: {', '.join(succeeded) if succeeded else 'none'}[/green]")
+        raise typer.Exit(1)
+    else:
+        console.print("[green]All reports generated successfully![/green]")
 
 
 @app.command()
