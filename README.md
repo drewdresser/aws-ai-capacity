@@ -6,6 +6,9 @@ A Pydantic AI-powered agent for managing and querying AWS GPU capacity, with a C
 
 - **SageMaker Training Plans**: Search offerings, list plans, check utilization
 - **EC2 Capacity**: Query reservations, check instance availability
+- **Spot Capacity**: Spot placement scores (1-10) and price history across regions
+- **On-Demand Capacity**: Launch-and-terminate availability check (opt-in, costs money)
+- **GPU Utilization**: View running GPU instances with spot vs on-demand breakdown
 - **GPU Specs**: Compare instance types and their capabilities
 - **Chat Interface**: Interactive Chainlit UI for ad-hoc queries
 - **CLI Reports**: Automated report generation for cron jobs
@@ -47,6 +50,11 @@ Required AWS permissions:
 - `sagemaker:DescribeTrainingPlan` - Get plan details
 - `ec2:DescribeCapacityReservations` - Query reservations
 - `ec2:DescribeInstanceTypeOfferings` - Check availability
+- `ec2:DescribeInstances` - List running GPU instances
+- `ec2:DescribeSpotPriceHistory` - Spot price trends
+- `ec2:GetSpotPlacementScores` - Spot capacity scores
+- `ec2:RunInstances` / `ec2:TerminateInstances` - On-demand capacity check (opt-in)
+- `ssm:GetParameter` - AMI lookup for on-demand check
 
 ### Environment Variables
 
@@ -92,6 +100,7 @@ uv run aws-ai-capacity chat "What p5 training plans are available?" --debug
 uv run aws-ai-capacity report daily
 uv run aws-ai-capacity report availability
 uv run aws-ai-capacity report training-plans
+uv run aws-ai-capacity report spot
 
 # Save report to file
 uv run aws-ai-capacity report daily -o capacity-report.md
@@ -116,8 +125,10 @@ uv run aws-ai-capacity list-instance-types
 - "Show me all active capacity reservations"
 - "Which regions have p4d.24xlarge available?"
 - "Compare the specs of p5 vs p4d instances"
-- "Generate a daily capacity report"
-- "Search for available H100 capacity"
+- "What are the spot placement scores for p5.48xlarge across all regions?"
+- "Show me spot price history for p4d.24xlarge in us-east-1"
+- "Show me all running GPU instances in my account"
+- "Check on-demand capacity for g5.xlarge in us-east-1"
 
 ## Project Structure
 
@@ -125,7 +136,7 @@ uv run aws-ai-capacity list-instance-types
 ai-capacity/
 ├── src/ai_capacity/
 │   ├── agent/          # Pydantic AI agent definition
-│   ├── tools/          # AWS API tools (SageMaker, EC2)
+│   ├── tools/          # AWS API tools (SageMaker, EC2, Spot/On-Demand)
 │   ├── cli/            # Typer CLI commands
 │   ├── ui/             # Chainlit chat interface
 │   └── config.py       # Settings management

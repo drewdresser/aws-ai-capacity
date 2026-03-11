@@ -7,7 +7,7 @@ from pydantic_ai.providers.bedrock import BedrockProvider
 from ai_capacity.agent.deps import AgentDeps
 from ai_capacity.agent.prompts import SYSTEM_PROMPT
 from ai_capacity.config import settings
-from ai_capacity.tools import ec2, sagemaker
+from ai_capacity.tools import ec2, sagemaker, spot
 
 # Create Bedrock provider with explicit region and profile for the LLM
 # This region is for Bedrock API calls, not for capacity queries
@@ -43,3 +43,9 @@ capacity_agent.tool(ec2.describe_instance_types_live)  # Live AWS API for accura
 capacity_agent.tool(ec2.get_gpu_instance_specs)
 capacity_agent.tool(ec2.list_regions)
 capacity_agent.tool(ec2.check_instance_availability_all_regions)
+
+# Register Spot/On-Demand tools
+capacity_agent.tool(spot.get_spot_placement_scores)
+capacity_agent.tool(spot.get_spot_price_history)
+capacity_agent.tool(spot.check_on_demand_capacity)
+capacity_agent.tool(spot.describe_running_gpu_instances)

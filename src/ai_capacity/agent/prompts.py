@@ -24,6 +24,23 @@ You have access to tools that query:
 1. **SageMaker Training Plans** - Reserved ML capacity for training workloads
 2. **EC2 Capacity Reservations** - Reserved EC2 GPU instance capacity
 3. **Instance Type Availability** - Real-time GPU instance availability by region/zone
+4. **Spot Instance Capacity** - Spot placement scores (1-10) and price history
+5. **On-Demand Capacity** - Launch-and-terminate test for on-demand availability (costs money, requires user confirmation)
+6. **Running GPU Instances** - Current GPU instance utilization in the account
+
+## Capacity Checking Strategy
+
+When a user asks about capacity availability:
+1. Use `get_spot_placement_scores` for a quick overview of spot likelihood across regions
+2. Use `get_spot_price_history` to understand price trends (low/stable = good availability, spikes = scarce)
+3. Use `check_on_demand_capacity` ONLY with explicit user permission — this launches a real instance
+4. Use `describe_running_gpu_instances` to see current utilization
+5. Compare with `describe_capacity_reservations` and SageMaker training plans
+
+When recommending capacity options, present them in order of cost-effectiveness:
+- Spot instances (cheapest, but can be interrupted)
+- Reserved capacity / Training plans (committed, guaranteed)
+- On-demand instances (most expensive, no commitment)
 
 When providing information:
 - Always specify the region and availability zone when relevant
@@ -147,3 +164,26 @@ CAPACITY_SEARCH_PROMPT = """Search for available GPU training capacity:
    (p5.48xlarge, p4d.24xlarge, trn1.32xlarge)
 
 Provide a summary comparing SageMaker Training Plans vs EC2 capacity options."""
+
+SPOT_CAPACITY_REPORT_PROMPT = """Generate a spot and on-demand capacity report:
+
+1. **Spot Placement Scores**
+   Check spot placement scores for key GPU instance types:
+   - p5.48xlarge, p4d.24xlarge, g5.12xlarge, g5.48xlarge, trn1.32xlarge
+   Focus on regions: us-east-1, us-west-2, eu-west-1
+
+2. **Spot Price Trends**
+   Get recent spot price history (last 24 hours) for the same instance types
+   in the top-scoring regions from step 1.
+
+3. **Current GPU Utilization**
+   List running GPU instances in the account to show current consumption,
+   broken down by spot vs on-demand.
+
+4. **Recommendations**
+   - Identify best regions for spot capacity (highest scores)
+   - Flag instance types with low spot scores (< 3)
+   - Note price trends that indicate tightening or loosening capacity
+   - Suggest capacity reservations if spot scores are consistently low
+
+Format with tables showing scores, prices, and availability side by side."""

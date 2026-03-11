@@ -8,6 +8,7 @@ import aioboto3
 if TYPE_CHECKING:
     from types_aiobotocore_ec2 import EC2Client
     from types_aiobotocore_sagemaker import SageMakerClient
+    from types_aiobotocore_ssm import SSMClient
 
 
 @dataclass
@@ -53,6 +54,23 @@ class AgentDeps:
         if key not in self._clients:
             self._clients[key] = await self.session.client(
                 "ec2", region_name=target_region
+            ).__aenter__()
+        return self._clients[key]
+
+    async def get_ssm_client(self, region: str | None = None) -> "SSMClient":
+        """Get async SSM client for specified region.
+
+        Args:
+            region: AWS region. Uses default region if not specified.
+
+        Returns:
+            SSM client for the specified region.
+        """
+        target_region = region or self.region
+        key = f"ssm_{target_region}"
+        if key not in self._clients:
+            self._clients[key] = await self.session.client(
+                "ssm", region_name=target_region
             ).__aenter__()
         return self._clients[key]
 

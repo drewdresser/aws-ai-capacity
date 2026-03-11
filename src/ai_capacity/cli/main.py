@@ -23,6 +23,7 @@ from ai_capacity.agent.prompts import (
     AVAILABILITY_CHECK_PROMPT,
     CAPACITY_SEARCH_PROMPT,
     DAILY_CAPACITY_REPORT_PROMPT,
+    SPOT_CAPACITY_REPORT_PROMPT,
     TRAINING_PLAN_STATUS_PROMPT,
 )
 from ai_capacity.config import settings
@@ -143,7 +144,7 @@ def chat(
 def report(
     report_type: str = typer.Argument(
         "daily",
-        help="Report type: daily, availability, training-plans, search",
+        help="Report type: daily, availability, training-plans, search, spot",
     ),
     output: Path | None = typer.Option(
         None,
@@ -159,6 +160,7 @@ def report(
         "availability": AVAILABILITY_CHECK_PROMPT,
         "training-plans": TRAINING_PLAN_STATUS_PROMPT,
         "search": CAPACITY_SEARCH_PROMPT,
+        "spot": SPOT_CAPACITY_REPORT_PROMPT,
     }
 
     if report_type not in prompts:
@@ -247,6 +249,7 @@ def cron_report(
         ("daily", DAILY_CAPACITY_REPORT_PROMPT),
         ("availability", AVAILABILITY_CHECK_PROMPT),
         ("training-plans", TRAINING_PLAN_STATUS_PROMPT),
+        ("spot", SPOT_CAPACITY_REPORT_PROMPT),
     ]
 
     succeeded = []
